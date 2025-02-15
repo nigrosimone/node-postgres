@@ -5,11 +5,16 @@
 	"service": "web",
 	"workspaceFolder": "/workspace",
 	// Add the IDs of extensions you want installed when the container is created in the array below.
-	"customizations":{
+	"customizations": {
 		"vscode": {
-			"extensions": ["dbaeumer.vscode-eslint"],
+			"extensions": [
+				"dbaeumer.vscode-eslint",
+				"streetsidesoftware.code-spell-checker",
+				"esbenp.prettier-vscode"
+			],
 			"settings": {
-				"terminal.integrated.shell.linux": "/bin/bash"
+				"terminal.integrated.shell.linux": "/bin/bash",
+				"files.eol": "\n"
 			}
 		}
 	}

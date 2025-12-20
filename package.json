@@ -17,9 +17,14 @@
     "docs:start": "cd docs && yarn start",
     "pretest": "yarn build",
     "prepublish": "yarn build",
-    "lint": "eslint --cache 'packages/**/*.{js,ts,tsx}'"
+    "lint": "eslint --cache 'packages/**/*.{js,ts,tsx}'",
+    "bench": "node --expose-gc ./bench/bench.js",
+    "bench:cmp": "node ./bench/bench-cmp-branch.js"
   },
   "devDependencies": {
+    "cli-select": "^1.1.2",
+    "simple-git": "^3.30.0",
+    "tinybench": "^6.0.0",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^6.17.0",
     "eslint": "^8.56.0",

@@ -43,12 +43,13 @@ try {
 
       const output = `${task.name} x ${formattedHz} req/sec ±${formattedRme}% (${samples} runs sampled)`
       parentPort.postMessage(output)
-      return pool.end()
+     
+      return Promise.all([pool.end(), nativePool.end()])
     })
     .catch((err) => {
       console.log(err)
       parentPort.postMessage(`Error: ${err.message}`)
-      return pool.end()
+      return Promise.all([pool.end(), nativePool.end()])
     })
 
 } catch (error) {

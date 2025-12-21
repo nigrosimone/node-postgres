@@ -20,6 +20,7 @@ const bench = new Bench({
 client
   .connect()
   .then(() => {
+    console.log('Thread: Connected to Postgres')
     bench
       .add(benchmark.name, () => client.query(benchmark.query))
       .run()

@@ -27,16 +27,11 @@ async function runBenchmark(benchmark) {
 
   return new Promise((resolve, reject) => {
     let result = null
-    worker.on('error', (err) => {
-        console.error('Worker error:', err)
-        reject(err)
-    })
+    worker.on('error', reject)
     worker.on('message', (benchResult) => {
-      console.log('Worker message received')
       result = benchResult
     })
     worker.on('exit', (code) => {
-        console.log('Worker exited with code', code)
       if (code === 0) {
         resolve(result)
       } else {

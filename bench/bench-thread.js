@@ -35,8 +35,12 @@ try {
 
           const output = `${task.name} x ${formattedHz} ops/sec ±${formattedRme}% (${samples} runs sampled)`
           parentPort.postMessage(output)
+          return client.end()
         })
-        .catch((err) => parentPort.postMessage(`Error: ${err.message}`))
+        .catch((err) => {
+           parentPort.postMessage(`Error: ${err.message}`)
+           return client.end()
+        })
     })
     .catch((err) => parentPort.postMessage(`Error: ${err.message}`))
 } catch (error) {

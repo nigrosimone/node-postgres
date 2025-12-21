@@ -26,15 +26,17 @@ try {
         .run()
         .then(() => {
           const task = bench.tasks[0]
-          console.log('Task result:', JSON.stringify(task.result, null, 2))
-          const hz = task.result.hz // ops/sec
-          const rme = task.result.rme // relative margin of error (%)
-          const samples = task.result.samples?.length || 0
+          // use throughput mean as Hz if not available on result
+          const hz = task.result.hz || task.result.throughput.mean
+          // use throughput rme
+          const rme = task.result.rme || task.result.throughput.rme
+          // use latency samplesCount
+          const samples = task.result.latency.samplesCount
 
           const formattedHz = hz.toLocaleString('en-US', { maximumFractionDigits: 0 })
           const formattedRme = rme.toFixed(2)
 
-          const output = `${task.name} x ${formattedHz} ops/sec ±${formattedRme}% (${samples} runs sampled)`
+          const output = `${task.name} x ${formattedHz} req/sec ±${formattedRme}% (${samples} runs sampled)`
           parentPort.postMessage(output)
           return pool.end()
         })

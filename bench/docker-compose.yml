@@ -12,6 +12,11 @@ services:
       - ..:/app
       - /app/node_modules
     working_dir: /app/bench
+    environment:
+      - PGHOST=db
+      - PGUSER=user
+      - PGPASSWORD=pass
+      - PGDATABASE=data
     depends_on:
       - db
     links:

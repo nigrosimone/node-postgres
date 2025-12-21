@@ -1,17 +1,23 @@
 FROM node:24
 
-WORKDIR /app/bench
+WORKDIR /app
 
 RUN apt-get update && apt-get install -y \
     git \
     bash \
+    libpq-dev \
+    g++ \
+    make \
     && rm -rf /var/lib/apt/lists/*
 
-RUN npm install -g yarn
+# Fix git owner issue
+RUN git config --global --add safe.directory /app
 
-COPY . /app
+# Fix git owner issue
+RUN git config --global --add safe.directory /app
 
-COPY package*.json ./
-RUN yarn install
+COPY . .
+
+RUN npm install
 
 CMD [ "bash" ]

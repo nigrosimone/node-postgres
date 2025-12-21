@@ -7,7 +7,23 @@ const BENCH_THREAD_PATH = path.join(__dirname, 'bench-thread.js')
 
 const benchmarks = [
   {
-    name: 'simple query',
+    name: 'simple query vanilla',
+    native: false,
+    query: {
+      text: `select
+      $1::int as int,
+      $2 as string,
+      $3::timestamp with time zone as timestamp,
+      $4 as null,
+      $5::bool as boolean
+      FROM generate_series(1,5)`,
+      values: [1337, 'wat', new Date().toISOString(), null, false],
+      name: 'pg',
+    },
+  },
+  {
+    name: 'simple query native',
+    native: true,
     query: {
       text: `select
       $1::int as int,

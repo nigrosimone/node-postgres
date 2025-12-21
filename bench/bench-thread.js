@@ -16,11 +16,17 @@ try {
     },
   })
 
-  const pool = new pg.Pool()
+  const { native, Pool } = pg
+  const { Pool: NativePool } = native
+  const pool = new Pool()
+  const nativePool = new NativePool()
 
   bench
     .add(benchmark.name, async() => {
-      await pool.query(benchmark.query)
+      if( benchmark.native ){
+        return nativePool.query(benchmark.query)
+      }
+      return pool.query(benchmark.query)
     })
     .run()
     .then(() => {
@@ -28,7 +34,7 @@ try {
       // use throughput mean as Hz if not available on result
       const hz = task.result.hz || task.result.throughput.mean
       // use throughput rme
-      const rme = task.result.rme || task.result.throughput.rme
+      const rme = task.result.rme || task.result.throughput?.rme
       // use latency samplesCount
       const samples = task.result.latency.samplesCount
 
@@ -40,11 +46,13 @@ try {
       return pool.end()
     })
     .catch((err) => {
+      console.log(err)
       parentPort.postMessage(`Error: ${err.message}`)
       return pool.end()
     })
 
 } catch (error) {
+  console.log(error)
   parentPort.postMessage(`Error: ${error.message}`)
 }
   

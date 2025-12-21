@@ -17,35 +17,33 @@ try {
   })
 
   const pool = new pg.Pool()
-  pool
-    .connect()
-    .then(() => {
-      console.log('Thread: Connected to Postgres')
-      bench
-        .add(benchmark.name, () => pool.query(benchmark.query))
-        .run()
-        .then(() => {
-          const task = bench.tasks[0]
-          // use throughput mean as Hz if not available on result
-          const hz = task.result.hz || task.result.throughput.mean
-          // use throughput rme
-          const rme = task.result.rme || task.result.throughput.rme
-          // use latency samplesCount
-          const samples = task.result.latency.samplesCount
 
-          const formattedHz = hz.toLocaleString('en-US', { maximumFractionDigits: 0 })
-          const formattedRme = rme.toFixed(2)
-
-          const output = `${task.name} x ${formattedHz} req/sec ±${formattedRme}% (${samples} runs sampled)`
-          parentPort.postMessage(output)
-          return pool.end()
-        })
-        .catch((err) => {
-           parentPort.postMessage(`Error: ${err.message}`)
-           return pool.end()
-        })
+  bench
+    .add(benchmark.name, async() => {
+      await pool.query(benchmark.query)
     })
-    .catch((err) => parentPort.postMessage(`Error: ${err.message}`))
+    .run()
+    .then(() => {
+      const task = bench.tasks[0]
+      // use throughput mean as Hz if not available on result
+      const hz = task.result.hz || task.result.throughput.mean
+      // use throughput rme
+      const rme = task.result.rme || task.result.throughput.rme
+      // use latency samplesCount
+      const samples = task.result.latency.samplesCount
+
+      const formattedHz = hz.toLocaleString('en-US', { maximumFractionDigits: 0 })
+      const formattedRme = rme.toFixed(2)
+
+      const output = `${task.name} x ${formattedHz} req/sec ±${formattedRme}% (${samples} runs sampled)`
+      parentPort.postMessage(output)
+      return pool.end()
+    })
+    .catch((err) => {
+      parentPort.postMessage(`Error: ${err.message}`)
+      return pool.end()
+    })
+
 } catch (error) {
   parentPort.postMessage(`Error: ${error.message}`)
 }

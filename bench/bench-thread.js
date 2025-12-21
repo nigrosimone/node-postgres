@@ -21,7 +21,11 @@ try {
   const pool = new Pool()
   const nativePool = new NativePool()
 
-  bench
+  Promise.all([
+    pool.query('SELECT 1'), 
+    nativePool.query('SELECT 1')
+  ]).then(() => {
+    bench
     .add(benchmark.name, async() => {
       if( benchmark.native ){
         return nativePool.query(benchmark.query)
@@ -51,6 +55,11 @@ try {
       parentPort.postMessage(`Error: ${err.message}`)
       return Promise.all([pool.end(), nativePool.end()])
     })
+  }).catch((err) => {
+      console.log(err)
+      parentPort.postMessage(`Error: ${err.message}`)
+      return Promise.all([pool.end(), nativePool.end()])
+  })
 
 } catch (error) {
   console.log(error)

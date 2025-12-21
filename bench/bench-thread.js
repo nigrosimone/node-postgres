@@ -16,13 +16,13 @@ try {
     },
   })
 
-  const client = new pg.Client()
-  client
+  const pool = new pg.Pool()
+  pool
     .connect()
     .then(() => {
       console.log('Thread: Connected to Postgres')
       bench
-        .add(benchmark.name, () => client.query(benchmark.query))
+        .add(benchmark.name, () => pool.query(benchmark.query))
         .run()
         .then(() => {
           const task = bench.tasks[0]
@@ -36,11 +36,11 @@ try {
 
           const output = `${task.name} x ${formattedHz} ops/sec ±${formattedRme}% (${samples} runs sampled)`
           parentPort.postMessage(output)
-          return client.end()
+          return pool.end()
         })
         .catch((err) => {
            parentPort.postMessage(`Error: ${err.message}`)
-           return client.end()
+           return pool.end()
         })
     })
     .catch((err) => parentPort.postMessage(`Error: ${err.message}`))

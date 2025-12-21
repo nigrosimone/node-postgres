@@ -26,9 +26,10 @@ try {
         .run()
         .then(() => {
           const task = bench.tasks[0]
+          console.log('Task result:', JSON.stringify(task.result, null, 2))
           const hz = task.result.hz // ops/sec
           const rme = task.result.rme // relative margin of error (%)
-          const samples = task.result.samples.length
+          const samples = task.result.samples?.length || 0
 
           const formattedHz = hz.toLocaleString('en-US', { maximumFractionDigits: 0 })
           const formattedRme = rme.toFixed(2)

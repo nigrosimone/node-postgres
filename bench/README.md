@@ -1,12 +1,14 @@
 # Usage
 
 Compare the current branch against the default branch (`main`):
-```
+
+```shell
 npm run bench:cmp -- current
 ```
 
 Compare two branch, eg. `my-branch` against `other-branch`:
-```
+
+```shell
 npm run bench:cmp -- my-branch other-branch 
 ```
 
@@ -15,7 +17,7 @@ If `bench:cmp` is executed without parameters, an interactive mode is enabled. T
 - the feature branch
 - the branch to compare against
 
-```
+```shell
 npm run bench:cmp                             
 
 Select the branch you want to compare (feature branch):
@@ -41,7 +43,7 @@ At the end, it automatically switches back to the original branch.
 
 # With Docker
 
-```
+```shell
 docker-compose up -d
 docker exec -it pg-bench-env bash
 npm run bench:cmp

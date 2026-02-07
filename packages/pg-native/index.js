@@ -28,6 +28,15 @@ const Client = (module.exports = function (config) {
   this._rows = undefined
   this._results = undefined
 
+  // pipeline mode state
+  this._pipelineSupported =
+    config.pipelineMode && this.pq.pipelineModeSupported ? this.pq.pipelineModeSupported() : false
+  this._inPipeline = false
+  this._pipelineQueue = []
+  this._pipelineResults = []
+  this._pipelineError = null
+  this._pipelineCallback = null
+
   // lazy start the reader if notifications are listened for
   // this way if you only run sync queries you wont block
   // the event loop artificially
@@ -56,6 +65,9 @@ Client.prototype.query = function (text, values, cb) {
   if (typeof values === 'function') {
     cb = values
   }
+  if (this._inPipeline) {
+    return cb(new Error('Cannot use client.query() while pipeline is active'))
+  }
 
   if (Array.isArray(values)) {
     queryFn = () => {
@@ -72,6 +84,67 @@ Client.prototype.query = function (text, values, cb) {
     this._awaitResult(cb)
   })
 }
+
+Client.prototype.pipeline = function (fn, cb) {
+  if (!this._pipelineSupported) {
+    return cb(new Error('Pipeline mode requires libpq 14+'))
+  }
+
+  if (this._inPipeline) {
+    return cb(new Error('Already in pipeline mode'))
+  }
+
+  this._inPipeline = true
+  this._pipelineQueue = []
+  this._pipelineResults = []
+  this._pipelineError = null
+
+  try {
+    fn({
+      query: (text, values) => {
+        this._pipelineQueue.push({ text, values })
+      },
+    })
+  } catch (err) {
+    this._inPipeline = false
+    return cb(err)
+  }
+
+  this._runPipeline(cb)
+}
+
+Client.prototype._runPipeline = function (cb) {
+  const pq = this.pq
+
+  if (!pq.enterPipelineMode()) {
+    this._inPipeline = false
+    return cb(new Error(pq.errorMessage()))
+  }
+
+  pq.setNonBlocking(true)
+
+  for (const q of this._pipelineQueue) {
+    const ok = Array.isArray(q.values) ? pq.sendQueryParams(q.text, q.values) : pq.sendQuery(q.text)
+
+    if (!ok) {
+      this._inPipeline = false
+      return cb(new Error(pq.errorMessage()))
+    }
+  }
+
+  pq.pipelineSync()
+
+  this._waitForDrain(pq, (err) => {
+    if (err) {
+      this._inPipeline = false
+      return cb(new Error(err))
+    }
+    this._pipelineCallback = cb
+    this._startReading()
+  })
+}
+
+// =================================================
 
 Client.prototype.prepare = function (statementName, text, nParams, cb) {
   const self = this
@@ -172,6 +245,45 @@ Client.prototype._consumeQueryResults = function (pq) {
 
 Client.prototype._emitResult = function (pq) {
   const status = pq.resultStatus()
+
+  if (this._inPipeline) {
+    if (status === 'PGRES_PIPELINE_SYNC') {
+      pq.exitPipelineMode()
+      this._inPipeline = false
+
+      const cb = this._pipelineCallback
+      this._pipelineCallback = null
+
+      const err = this._pipelineError
+      const results = this._pipelineResults
+
+      this._pipelineResults = []
+      this._pipelineError = null
+
+      if (cb) {
+        cb(
+          err,
+          results.map((r) => r.rows),
+          results
+        )
+      }
+      return status
+    }
+
+    if (status === 'PGRES_FATAL_ERROR') {
+      this._pipelineError = new Error(pq.resultErrorMessage())
+      return status
+    }
+
+    if (status === 'PGRES_TUPLES_OK' || status === 'PGRES_COMMAND_OK' || status === 'PGRES_EMPTY_QUERY') {
+      const result = this._consumeQueryResults(pq)
+      this._pipelineResults.push(result)
+      return status
+    }
+
+    return status
+  }
+
   switch (status) {
     case 'PGRES_FATAL_ERROR':
       this._queryError = new Error(this.pq.resultErrorMessage())
@@ -233,7 +345,10 @@ Client.prototype._read = function () {
     }
   }
 
-  this.emit('readyForQuery')
+  // ReadyForQuery only in normal mode
+  if (!this._inPipeline) {
+    this.emit('readyForQuery')
+  }
 
   let notice = this.pq.notifies()
   while (notice) {
@@ -307,6 +422,9 @@ Client.prototype._onResult = function (result) {
 }
 
 Client.prototype._onReadyForQuery = function () {
+  if (this._inPipeline) {
+    return
+  }
   // remove instance callback
   const cb = this._queryCallback
   this._queryCallback = undefined

@@ -6,6 +6,7 @@ const TypeOverrides = require('./type-overrides')
 
 const ConnectionParameters = require('./connection-parameters')
 const Query = require('./query')
+const sqlTemplate = require('./sql')
 const defaults = require('./defaults')
 const Connection = require('./connection')
 const crypto = require('./crypto/utils')
@@ -83,6 +84,9 @@ class Client extends EventEmitter {
     this._queryable = true
     this._activeQuery = null
     this._txStatus = null
+
+    // bound so it can be destructured: const { sql } = client
+    this.sql = (strings, ...values) => this.query(sqlTemplate(strings, ...values))
 
     this.enableChannelBinding = Boolean(c.enableChannelBinding) // set true to use SCRAM-SHA-256-PLUS when offered
     this.scramMaxIterations = coerceNumberOrDefault(c.scramMaxIterations, sasl.DEFAULT_MAX_SCRAM_ITERATIONS)

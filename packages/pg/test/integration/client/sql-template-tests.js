@@ -47,3 +47,25 @@ suite.test('sql template works with pool.query', async function () {
 
   await pool.end()
 })
+
+suite.test('sql is attached to the pool and runs the query directly', async function () {
+  const pool = new helper.pg.Pool({ max: 2 })
+  const { sql } = pool
+
+  const id = 7
+  const result = await sql`SELECT ${id}::int AS id`
+  assert.equal(result.rows[0].id, 7)
+
+  await pool.end()
+})
+
+suite.test('sql is attached to the client and runs the query directly', async function () {
+  const client = new helper.Client()
+  await client.connect()
+  const { sql } = client
+
+  const result = await sql`SELECT ${'hello'}::text AS msg`
+  assert.equal(result.rows[0].msg, 'hello')
+
+  await client.end()
+})

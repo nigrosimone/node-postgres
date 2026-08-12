@@ -15,6 +15,8 @@ const poolFactory = (Client) => {
   return class BoundPool extends Pool {
     constructor(options) {
       super(options, Client)
+      // bound so it can be destructured: const { sql } = pool
+      this.sql = (strings, ...values) => this.query(sql(strings, ...values))
     }
   }
 }

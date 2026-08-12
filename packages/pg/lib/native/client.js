@@ -14,6 +14,7 @@ const util = require('util')
 const ConnectionParameters = require('../connection-parameters')
 
 const NativeQuery = require('./query')
+const sqlTemplate = require('../sql')
 
 const queryQueueLengthDeprecationNotice = nodeUtils.deprecate(
   () => {},
@@ -26,6 +27,9 @@ const Client = (module.exports = function (config) {
 
   this._Promise = config.Promise || global.Promise
   this._types = new TypeOverrides(config.types)
+
+  // bound so it can be destructured: const { sql } = client
+  this.sql = (strings, ...values) => this.query(sqlTemplate(strings, ...values))
 
   this.native = new Native({
     types: this._types,

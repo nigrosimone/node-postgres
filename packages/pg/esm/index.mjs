@@ -12,6 +12,7 @@ export const escapeIdentifier = pg.escapeIdentifier
 export const escapeLiteral = pg.escapeLiteral
 export const Result = pg.Result
 export const TypeOverrides = pg.TypeOverrides
+export const sql = pg.sql
 
 // Also export the defaults
 export const defaults = pg.defaults
